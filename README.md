@@ -1,19 +1,19 @@
 # USAGeoDomainAnalyzer
 
-**USA Geo Domain Analyzer** — تطبيق سطح مكتب مبني بـ **Python + PySide6** يفحص توفر الدومينات جغرافياً عبر المدن الأمريكية والنيتشات المستهدفة.
+**USA Geo Domain Analyzer** — a desktop application built with **Python + PySide6** that checks domain availability across US cities for your target niches.
 
-## ما الذي يقدمه؟
+## Features
 
-- نافذة عصرية **بدون إطار** مع زوايا دائرية، ظل ناعم، سحب من الهيدر، وتكبير/تصغير مرن
-- **Sidebar قابل للطي** مع مجموعات تنقل (رئيسية / تحليل / نظام) ومؤشر للصفحة النشطة
-- **أوضاع فاتح / داكن** مع زر تبديل في الهيدر
-- **8 صفحات**: لوحة التحكم، المدن، النيتشات، المحلل، الدومينات، الصيانة، النسخ الاحتياطي، معلومات التطبيق
-- تحليل نطاقات `<city><niche>.com` عبر واجهة **Verisign RDAP**
-- قاعدة بيانات **SQLite** مع **نسخ احتياطي واسترجاع**
-- نظام ترجمة عبر ملفات **JSON**
-- صفحة **Info** مع روابط تواصل (LinkedIn / GitHub / Email)
+- Modern **frameless window** with rounded corners, soft shadow, drag-from-header, and flexible minimize/maximize
+- **Collapsible sidebar** with navigation groups (Main / Analysis / System) and an active-page indicator
+- **Light / Dark themes** with a toggle button in the header
+- **8 pages**: Dashboard, Cities, Niches, Analyzer, Domains, Maintenance, Database Backup, Info
+- Domain checks for `<city><niche>.com` via the **Verisign RDAP** interface
+- **SQLite** database with **backup and restore**
+- **JSON** based translation system
+- **Info** page with contact links (LinkedIn / GitHub / Email)
 
-## التشغيل
+## Getting started
 
 ```bash
 python3 -m venv .venv
@@ -22,37 +22,37 @@ pip install -r requirements.txt
 python3 main.py
 ```
 
-## البنية
+## Project structure
 
 ```text
-main.py               نقطة الدخول
+main.py               Entry point
 app/
-  core/               الإعدادات والأيقونات وروابط التواصل
+  core/               Settings, icons, and contact links
   ui/
     components/       Header, Sidebar, Footer
-    layouts/          إطار النافذة والتخطيط والنافذة الرئيسية
-    navigation/       نظام التنقل (config → registry → manager)
-    pages/            الصفحات (Home, Reports)
-    themes/           أنظمة الألوان الفاتح/الداكن
+    layouts/          Window frame, main layout, and main window
+    navigation/       Navigation system (config → registry → manager)
+    pages/            Pages (Home, Reports)
+    themes/           Light/dark color schemes
 moduls/
-  cities/             إدارة المدن
-  niches/             إدارة النيتشات
-  analyzer/           المحلل (تحليل الدومينات)
-  domains/            استكشاف الدومينات
-  maintenance/        إعادة فحص الدومينات المجهولة
-  backup/             النسخ الاحتياطي واسترجاع قاعدة البيانات
-  info/               معلومات التطبيق والتواصل
+  cities/             Cities management
+  niches/             Niches management
+  analyzer/           Analyzer (domain checking)
+  domains/            Domains explorer
+  maintenance/        Unknown domains re-check
+  backup/             Database backup and restore
+  info/               App info and contact
 database/             SQLite (models + manager + app_data.db)
-translator/           ملفات الترجمة JSON
-widgets.py            عناصر جداول قابلة للفرز
-config/               إعدادات محفوظة (اللغة، الثيم، حجم النافذة)
-assets/icons/         أيقونات SVG
+translator/           JSON translation files
+widgets.py            Sortable table widgets
+config/               Saved settings (language, theme, window size)
+assets/icons/         SVG icons
 ```
 
-## صفحة التحليل
+## Analyzer page
 
-تتبع مبدأ `ui.py → controller.py → services.py → database/models.py`، ويعمل التحليل الجماعي عبر خيط `QThread` مع إخراج حي للنتائج.
+Follows the `ui.py → controller.py → services.py → database/models.py` pattern. Batch analysis runs on a `QThread` with live output of results.
 
-## الترخيص
+## License
 
-هذا المشروع مرخّص بموجب [رخصة MIT](LICENSE). حقوق النشر © 2026 Mouad Kaismoune.
+This project is licensed under the [MIT License](LICENSE). Copyright © 2026 Mouad Kaismoune.
