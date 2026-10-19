@@ -11,6 +11,8 @@ from moduls.maintenance.worker import RecheckThread
 from moduls.maintenance.services import delete_unknown_domains
 from widgets import NumericTableWidgetItem
 
+_MAX_DELAY = 60
+
 
 class MaintenanceWidget(QWidget):
     done = Signal()
@@ -20,7 +22,6 @@ class MaintenanceWidget(QWidget):
         self._all_domains = []
         self._thread = None
         self._setup_ui()
-        self.refresh_data()
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -79,7 +80,7 @@ class MaintenanceWidget(QWidget):
 
         control_layout.addStretch()
 
-        delay_label = QLabel("Delay (sec):")
+        delay_label = QLabel(t.t("common_delay_label"))
         delay_label.setStyleSheet("font-size: 12px; color: #7F8C8D;")
         control_layout.addWidget(delay_label)
 
@@ -116,7 +117,7 @@ class MaintenanceWidget(QWidget):
         self.table.setSortingEnabled(True)
         layout.addWidget(self.table, 1)
 
-        output_label = QLabel("Live Output:")
+        output_label = QLabel(t.t("common_live_output"))
         output_label.setStyleSheet("font-weight: bold; font-size: 13px;")
         layout.addWidget(output_label)
 
@@ -184,7 +185,7 @@ class MaintenanceWidget(QWidget):
         self._append_output("─" * 60, "#45475A")
 
         try:
-            delay = max(0, int(self.delay_input.text() or "2"))
+            delay = max(0, min(int(self.delay_input.text() or "2"), _MAX_DELAY))
         except ValueError:
             delay = 2
         self._thread = RecheckThread(delay=delay)
@@ -206,7 +207,6 @@ class MaintenanceWidget(QWidget):
             resolved = data["resolved"]
             current = data["current"]
             total = data["total"]
-            fixed = data["fixed"]
 
             if resolved:
                 color = "#A6E3A1"
@@ -231,6 +231,8 @@ class MaintenanceWidget(QWidget):
                 self._append_output("No unknown domains found!", "#A6E3A1")
             else:
                 self._append_output(f"Re-check completed: {msg}", "#A6E3A1")
+        elif msg == "unexpected_error":
+            self._append_output(f"⚠️ {t.t('common_unexpected_error')}", "#E74C3C")
         else:
             self._append_output("Re-check stopped by user", "#F39C12")
 

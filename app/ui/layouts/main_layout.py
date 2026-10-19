@@ -87,21 +87,6 @@ class MainLayout(QWidget):
                 self._header.set_page_title(item.label)
                 return
 
-    def update_navigation(
-        self,
-        navigation_items: list[NavigationItem],
-        group_labels: dict[str, str] | None = None,
-    ) -> None:
-        """Relabel the sidebar and header when navigation labels change (language switch)."""
-        self._navigation_items = navigation_items
-        self._sidebar.update_labels(navigation_items, group_labels or get_group_labels())
-        current = self._navigation_manager.current_page_id
-        if current:
-            for item in navigation_items:
-                if item.page_id == current:
-                    self._header.set_page_title(item.label)
-                    break
-
     @property
     def header(self) -> Header:
         return self._header

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
 from translator import translator as t
 from app.core.config import CONFIG
 from app.core.contact import contact_links
-from app.core.icons import load_icon, load_icon_pixmap
+from app.core.icons import load_icon, load_logo_pixmap
 
 _CONTACT_BUTTONS = (
     ("linkedin", "info_linkedin", "linkedin"),
@@ -47,7 +47,7 @@ class InfoWidget(QWidget):
         brand_row.setSpacing(14)
 
         icon_label = QLabel()
-        icon_label.setPixmap(load_icon_pixmap("backup", _accent_color(), 56))
+        icon_label.setPixmap(load_logo_pixmap(56))
         icon_label.setFixedSize(56, 56)
         brand_row.addWidget(icon_label, 0, Qt.AlignmentFlag.AlignVCenter)
 

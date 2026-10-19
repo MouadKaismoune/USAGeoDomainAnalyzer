@@ -27,7 +27,3 @@ class NavigationManager(QObject):
         self._content_area.setCurrentWidget(widget)
         self._current_page_id = page_id
         self.current_page_changed.emit(page_id)
-
-    @property
-    def current_page_id(self) -> str | None:
-        return self._current_page_id

@@ -36,8 +36,8 @@ class HomePage(BasePage):
 
     def __init__(self, parent=None) -> None:
         super().__init__(
-            "Dashboard",
-            "Overview of your domain analysis data.",
+            t.t("home_title"),
+            t.t("home_subtitle"),
             parent,
         )
         self._cards: dict[str, StatCard] = {}
@@ -87,15 +87,6 @@ class HomePage(BasePage):
         self._theme = theme
         for card in self._cards.values():
             card.apply_theme(theme)
-
-    def retranslate(self) -> None:
-        self._title.setText(t.t("home_title"))
-        self._subtitle.setText("")
-        for field, card in self._cards.items():
-            card.set_caption(t.t(_LABELS[field]))
-        if self._theme is not None:
-            self.apply_theme(self._theme)
-        self.refresh()
 
     def showEvent(self, event) -> None:
         super().showEvent(event)

@@ -1,3 +1,5 @@
+import traceback
+
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLineEdit,
     QPushButton, QTableWidget, QTableWidgetItem, QLabel,
@@ -17,10 +19,22 @@ class AddCityThread(QThread):
     def __init__(self, city_name, parent=None):
         super().__init__(parent)
         self._city_name = city_name
+        self._running = True
+
+    def stop(self):
+        self._running = False
 
     def run(self):
-        from moduls.cities.services import add_city
-        success, msg = add_city(self._city_name, progress_callback=self._on_progress)
+        try:
+            from moduls.cities.services import add_city
+            success, msg = add_city(
+                self._city_name,
+                progress_callback=self._on_progress,
+                should_stop=lambda: not self._running,
+            )
+        except Exception:
+            traceback.print_exc()
+            success, msg = False, "unexpected_error"
         self.finished.emit(success, msg)
 
     def _on_progress(self, **kwargs):
@@ -35,7 +49,6 @@ class CitiesWidget(QWidget):
         self._loading = False
         self.IGNORE_COL = 2
         self._setup_ui()
-        self.refresh_data()
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -208,12 +221,19 @@ class CitiesWidget(QWidget):
         self.city_input.clear()
 
         if success:
-            self.status_label.setText(f"✅ {t.t('cities_added_success')}")
+            text = t.t("cities_added_success")
+        elif msg == "unexpected_error":
+            text = t.t("common_unexpected_error")
         else:
-            self.status_label.setText(f"❌ {t.t(msg)}")
+            text = t.t(f"cities_{msg}")
+
+        if success:
+            self.status_label.setText(f"✅ {text}")
+        else:
+            self.status_label.setText(f"❌ {text}")
 
         self.refresh_data()
-        QMessageBox.information(self, t.t("common_success") if success else t.t("common_error"), t.t(msg))
+        QMessageBox.information(self, t.t("common_success") if success else t.t("common_error"), text)
 
     def _on_delete(self):
         row = self.table.currentRow()

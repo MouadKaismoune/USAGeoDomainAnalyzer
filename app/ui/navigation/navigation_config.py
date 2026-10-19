@@ -13,13 +13,6 @@ class NavigationItem:
     group: str | None = None
 
 
-GROUP_LABELS: dict[str, str] = {
-    "Main": t.t("nav_group_main"),
-    "Analysis": t.t("nav_group_analysis"),
-    "System": t.t("nav_group_system"),
-}
-
-
 def get_navigation_items() -> list[NavigationItem]:
     return [
         NavigationItem(page_id="home", label=t.t("sidebar_home"), icon="home", group="Main"),

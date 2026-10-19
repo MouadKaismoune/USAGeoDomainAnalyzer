@@ -32,20 +32,21 @@ app/
     components/       Header, Sidebar, Footer
     layouts/          Window frame, main layout, and main window
     navigation/       Navigation system (config → registry → manager)
-    pages/            Pages (Home, Reports)
+    pages/            Pages (Home dashboard)
     themes/           Light/dark color schemes
 moduls/
   cities/             Cities management
   niches/             Niches management
   analyzer/           Analyzer (domain checking)
   domains/            Domains explorer
+  strength/           Domain strength scoring
   maintenance/        Unknown domains re-check
   backup/             Database backup and restore
   info/               App info and contact
 database/             SQLite (models + manager + app_data.db)
 translator/           JSON translation files
 widgets.py            Sortable table widgets
-config/               Saved settings (language, theme, window size)
+config/               Saved settings (theme, window size)
 assets/icons/         SVG icons
 ```
 

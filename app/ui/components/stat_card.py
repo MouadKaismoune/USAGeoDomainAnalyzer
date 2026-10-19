@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable
-
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
 
 from app.core.icons import load_icon_pixmap
@@ -31,7 +29,6 @@ class StatCard(QFrame):
             accent = "primary"
         self._icon_name = icon_name
         self._accent = accent
-        self._theme_name: str | None = None
 
         self.setObjectName("StatCard")
         self.setProperty("accent", accent)
@@ -66,9 +63,6 @@ class StatCard(QFrame):
     def set_value(self, text: str) -> None:
         self._value.setText(text)
 
-    def set_caption(self, text: str) -> None:
-        self._caption.setText(text)
-
     def apply_theme(self, theme: Theme) -> None:
         """Refresh the badge icon so it picks up the current theme palette."""
         color = _accent_color(theme, self._accent)
@@ -80,10 +74,3 @@ def _accent_color(theme: Theme, accent: str) -> str:
     if color:
         return color
     return theme.primary
-
-
-def _accent_tint(theme: Theme, accent: str) -> str:
-    tint = getattr(theme, f"{accent}_tint", None)
-    if tint:
-        return tint
-    return theme.primary_tint

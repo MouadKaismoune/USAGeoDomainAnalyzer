@@ -8,8 +8,11 @@ from PySide6.QtGui import QColor, QFont, QTextCursor
 from config import config
 from translator import translator as t
 from app.ui.themes.theme import DARK, LIGHT
-from moduls.analyzer.controller import start_analysis, stop_analysis_thread, get_analysis_info
-from moduls.niches.services import get_unchecked_niches
+from moduls.analyzer.controller import start_analysis, stop_analysis_thread
+from moduls.niches.services import get_unchecked_niches, get_oldest_niche_names
+
+
+_MAX_DELAY = 60
 
 
 def _text_color(key):
@@ -43,6 +46,14 @@ class AnalyzerWidget(QWidget):
         title.setObjectName("page_title")
         layout.addWidget(title)
 
+        # Body: niches + controls on the left, live results on the right
+        body = QHBoxLayout()
+        body.setSpacing(12)
+
+        # ---------- Left column ----------
+        left_col = QVBoxLayout()
+        left_col.setSpacing(12)
+
         niches_card = QFrame()
         niches_card.setObjectName("AnalyzerNichesCard")
         niches_layout = QVBoxLayout(niches_card)
@@ -59,7 +70,7 @@ class AnalyzerWidget(QWidget):
         niches_header.addWidget(self.niches_count_label)
         niches_layout.addLayout(niches_header)
 
-        select_all_cb = QCheckBox("Select All")
+        select_all_cb = QCheckBox(t.t("analyzer_select_all"))
         select_all_cb.setObjectName("AnalyzerNicheCheck")
         select_all_cb.stateChanged.connect(self._select_all)
         niches_layout.addWidget(select_all_cb)
@@ -67,7 +78,6 @@ class AnalyzerWidget(QWidget):
         self.niches_scroll = QScrollArea()
         self.niches_scroll.setObjectName("AnalyzerNichesScroll")
         self.niches_scroll.setWidgetResizable(True)
-        self.niches_scroll.setMaximumHeight(150)
         self.niches_scroll.setFrameShape(QFrame.NoFrame)
         self.niches_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
@@ -77,14 +87,25 @@ class AnalyzerWidget(QWidget):
         self.niches_checks_layout.setContentsMargins(0, 0, 0, 0)
         self.niches_checks_layout.setSpacing(4)
         self.niches_scroll.setWidget(self.niches_container)
-        niches_layout.addWidget(self.niches_scroll)
+        niches_layout.addWidget(self.niches_scroll, 1)
 
-        layout.addWidget(niches_card)
+        left_col.addWidget(niches_card, 1)
 
         control_card = QFrame()
         control_card.setObjectName("card")
-        control_layout = QHBoxLayout(control_card)
-        control_layout.setSpacing(12)
+        control_layout = QVBoxLayout(control_card)
+        control_layout.setSpacing(10)
+
+        delay_row = QHBoxLayout()
+        delay_label = QLabel(t.t("analyzer_delay_label"))
+        delay_label.setObjectName("AnalyzerDelayLabel")
+        delay_row.addWidget(delay_label)
+        delay_row.addStretch()
+        self.delay_input = QLineEdit("2")
+        self.delay_input.setFixedWidth(60)
+        self.delay_input.setAlignment(Qt.AlignCenter)
+        delay_row.addWidget(self.delay_input)
+        control_layout.addLayout(delay_row)
 
         self.start_btn = QPushButton(t.t("analyzer_start"))
         self.start_btn.clicked.connect(self._on_start)
@@ -96,19 +117,51 @@ class AnalyzerWidget(QWidget):
         self.stop_btn.clicked.connect(self._on_stop)
         control_layout.addWidget(self.stop_btn)
 
-        control_layout.addStretch()
+        control_layout.addSpacing(6)
 
-        delay_label = QLabel("Delay (sec):")
-        delay_label.setObjectName("AnalyzerDelayLabel")
-        control_layout.addWidget(delay_label)
+        oldest_row = QHBoxLayout()
+        oldest_label = QLabel(t.t("analyzer_oldest_label"))
+        oldest_label.setObjectName("AnalyzerDelayLabel")
+        oldest_row.addWidget(oldest_label)
+        oldest_row.addStretch()
+        self.oldest_input = QLineEdit("5")
+        self.oldest_input.setFixedWidth(60)
+        self.oldest_input.setAlignment(Qt.AlignCenter)
+        oldest_row.addWidget(self.oldest_input)
+        control_layout.addLayout(oldest_row)
 
-        self.delay_input = QLineEdit("2")
-        self.delay_input.setFixedWidth(50)
-        self.delay_input.setAlignment(Qt.AlignCenter)
-        control_layout.addWidget(self.delay_input)
+        self.oldest_btn = QPushButton(t.t("analyzer_start_oldest"))
+        self.oldest_btn.clicked.connect(self._on_start_oldest)
+        control_layout.addWidget(self.oldest_btn)
 
-        layout.addWidget(control_card)
+        left_col.addWidget(control_card)
 
+        left_panel = QWidget()
+        left_panel.setLayout(left_col)
+        left_panel.setFixedWidth(300)
+        body.addWidget(left_panel)
+
+        # ---------- Right column ----------
+        right_col = QVBoxLayout()
+        right_col.setSpacing(8)
+
+        output_label = QLabel(t.t("common_live_output"))
+        output_label.setObjectName("AnalyzerOutputLabel")
+        right_col.addWidget(output_label)
+
+        self.output = QTextEdit()
+        self.output.setObjectName("AnalyzerOutput")
+        self.output.setReadOnly(True)
+        self.output.setFont(QFont("Consolas", 11))
+        right_col.addWidget(self.output, 1)
+
+        right_panel = QWidget()
+        right_panel.setLayout(right_col)
+        body.addWidget(right_panel, 1)
+
+        layout.addLayout(body, 1)
+
+        # ---------- Bottom: full-width progress bar ----------
         progress_card = QFrame()
         progress_card.setObjectName("card")
         progress_layout = QVBoxLayout(progress_card)
@@ -117,7 +170,7 @@ class AnalyzerWidget(QWidget):
         progress_row = QHBoxLayout()
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)
-        progress_row.addWidget(self.progress_bar)
+        progress_row.addWidget(self.progress_bar, 1)
         self.progress_label = QLabel("0%")
         self.progress_label.setFixedWidth(50)
         self.progress_label.setAlignment(Qt.AlignCenter)
@@ -145,16 +198,6 @@ class AnalyzerWidget(QWidget):
         progress_layout.addLayout(stats_row)
 
         layout.addWidget(progress_card)
-
-        output_label = QLabel("Live Output:")
-        output_label.setObjectName("AnalyzerOutputLabel")
-        layout.addWidget(output_label)
-
-        self.output = QTextEdit()
-        self.output.setObjectName("AnalyzerOutput")
-        self.output.setReadOnly(True)
-        self.output.setFont(QFont("Consolas", 11))
-        layout.addWidget(self.output, 1)
 
         self._load_niches()
 
@@ -186,9 +229,10 @@ class AnalyzerWidget(QWidget):
 
     def _get_delay(self):
         try:
-            return max(0, int(self.delay_input.text() or "2"))
+            value = int(self.delay_input.text() or "2")
         except ValueError:
-            return 2
+            value = 2
+        return max(0, min(value, _MAX_DELAY))
 
     def _on_start(self):
         selected = self._get_selected_niches()
@@ -196,6 +240,26 @@ class AnalyzerWidget(QWidget):
             self._append_output("⚠️ No niches selected!", "warning")
             return
 
+        self._start_analysis(selected)
+
+    def _on_start_oldest(self):
+        try:
+            count = int(self.oldest_input.text() or "0")
+        except ValueError:
+            count = 0
+        if count <= 0:
+            self._append_output("⚠️ Enter a valid number of niches!", "warning")
+            return
+
+        niches = get_oldest_niche_names(count)
+        if not niches:
+            self._append_output("⚠️ No niches available to re-check!", "warning")
+            return
+
+        header = f"🕓 Selected {len(niches)} oldest niche(s) for re-check."
+        self._start_analysis(niches, header=header)
+
+    def _start_analysis(self, selected, header=None):
         delay = self._get_delay()
 
         self.output.clear()
@@ -203,6 +267,8 @@ class AnalyzerWidget(QWidget):
         self.progress_label.setText("0%")
         self.domain_stat.setText("Available: 0 | Registered: 0")
 
+        if header:
+            self._append_output(header, "info")
         self._append_output(f"Starting analysis for {len(selected)} niches...", "info")
         self._append_output(f"Delay between cities: {delay}s", "dim")
         self._append_output("─" * 60, "rule")
@@ -213,6 +279,7 @@ class AnalyzerWidget(QWidget):
         self._thread.start()
 
         self.start_btn.setEnabled(False)
+        self.oldest_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
 
     def _on_stop(self):
@@ -222,7 +289,10 @@ class AnalyzerWidget(QWidget):
     def _on_signal(self, data):
         msg_type = data.get("type", "")
 
-        if msg_type == "niche_start":
+        if msg_type == "niche_reset":
+            self._append_output(f"↺ Reset previous results for {data['niche']}", "dim")
+
+        elif msg_type == "niche_start":
             niche = data["niche"]
             idx = data["niche_index"]
             total = data["total_niches"]
@@ -273,7 +343,6 @@ class AnalyzerWidget(QWidget):
 
         elif msg_type == "delay":
             seconds = data["seconds"]
-            next_niche = data["next_niche"]
             self._append_output(f"\n⏳ Waiting {seconds}s before next niche...", "dim")
 
     def _append_output(self, text, key="text"):
@@ -286,13 +355,14 @@ class AnalyzerWidget(QWidget):
 
     def _on_finished(self, success, msg):
         self.start_btn.setEnabled(True)
+        self.oldest_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
 
         self._append_output("\n" + "=" * 60, "accent")
         if success:
             self._append_output("🎯 Analysis completed successfully!", "success")
         else:
-            key = f"analyzer_{msg}"
+            key = "common_unexpected_error" if msg == "unexpected_error" else msg
             from translator import translator
             translated = translator.t(key)
             self._append_output(f"⚠️ {translated}", "warning")

@@ -8,7 +8,6 @@ class Translator:
     _instance = None
     _current_language = "en"
     _translations = {}
-    _callbacks = []
 
     def __new__(cls):
         if cls._instance is None:
@@ -27,18 +26,6 @@ class Translator:
                 with open(filepath, "r", encoding="utf-8") as f:
                     self._translations[lang_code] = json.load(f)
 
-    def get_available_languages(self):
-        return list(self._translations.keys())
-
-    def set_language(self, lang_code: str):
-        if lang_code in self._translations:
-            self._current_language = lang_code
-            for callback in self._callbacks:
-                callback(lang_code)
-
-    def on_language_changed(self, callback):
-        self._callbacks.append(callback)
-
     def t(self, key: str, **kwargs) -> str:
         lang_data = self._translations.get(self._current_language, {})
         fallback = self._translations.get("en", {})
@@ -49,12 +36,6 @@ class Translator:
             except (KeyError, IndexError):
                 pass
         return text
-
-    def get_current_language(self):
-        return self._current_language
-
-    def reload(self):
-        self._load_all_translations()
 
 
 translator = Translator()

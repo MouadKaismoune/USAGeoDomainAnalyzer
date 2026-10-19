@@ -46,7 +46,6 @@ class Footer(QFrame):
             button.setFixedSize(26, 26)
             button.setCursor(Qt.CursorShape.PointingHandCursor)
             button.setToolTip(tip)
-            button.setProperty("_icon_name", icon)
             button.clicked.connect(lambda _=False, name=icon: self._open_contact(name))
             layout.addWidget(button)
             self._contact_buttons.append(button)
@@ -68,7 +67,3 @@ class Footer(QFrame):
         url = _CONTACT_LINKS.get(name)
         if url:
             webbrowser.open(url)
-
-    def retranslate(self) -> None:
-        self._left.setText(CONFIG.name)
-        self._developer.setText(f"Made by {CONFIG.developer}")

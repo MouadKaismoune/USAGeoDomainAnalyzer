@@ -223,7 +223,3 @@ class FramelessWindow(QMainWindow):
             self.setGeometry(self._normal_geometry)
         self._maximized = False
         self.maximized_changed.emit(False)
-
-    @property
-    def is_maximized(self) -> bool:
-        return self._maximized

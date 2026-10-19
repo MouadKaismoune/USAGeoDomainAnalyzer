@@ -10,7 +10,7 @@ ASSETS_DIR = PROJECT_ROOT / "assets"
 @dataclass(frozen=True)
 class AppConfig:
     name: str = "USAGeoDomainAnalyzer"
-    version: str = "1.0.0"
+    version: str = "26.10"
     developer: str = "Kaismoune Mouad"
     developer_location: str = "Algeria"
     linkedin_url: str = "https://www.linkedin.com/in/mouadkaismoune/"

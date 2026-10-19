@@ -276,18 +276,6 @@ QWidget {
     font-size: 14px;
 }
 
-#Card {
-    background-color: @surface;
-    border: 1px solid @border;
-    border-radius: @radius_medium;
-}
-
-#CardTitle {
-    color: @text_primary;
-    font-size: 16px;
-    font-weight: 600;
-}
-
 #CardText {
     color: @text_secondary;
     font-size: 14px;
@@ -582,7 +570,7 @@ QComboBox QAbstractItemView {
     selection-color: #FFFFFF;
 }
 
-QTableWidget {
+QTableWidget, QTableView {
     background-color: @surface;
     alternate-background-color: @sidebar_hover_bg;
     border: 1px solid @border;
@@ -593,7 +581,7 @@ QTableWidget {
     padding: 4px;
 }
 
-QTableWidget::item {
+QTableWidget::item, QTableView::item {
     padding: 6px;
 }
 
@@ -688,6 +676,14 @@ QScrollBar::add-line, QScrollBar::sub-line {
 
 QMessageBox {
     background-color: @surface;
+}
+
+QToolTip {
+    background-color: @surface;
+    color: @text_primary;
+    border: 1px solid @border;
+    border-radius: @radius_small;
+    padding: 6px 10px;
 }
 """
 

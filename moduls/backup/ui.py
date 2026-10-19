@@ -18,7 +18,6 @@ class BackupWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._setup_ui()
-        self.refresh_data()
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)

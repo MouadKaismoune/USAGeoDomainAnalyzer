@@ -111,24 +111,6 @@ class Sidebar(QFrame):
         self._labels[item.page_id] = item.label
         self._icon_names[item.page_id] = item.icon
 
-    def update_labels(self, items: list[NavigationItem], group_labels: dict[str, str] | None = None) -> None:
-        """Refresh navigation labels and group headings (e.g. after language change)."""
-        if group_labels:
-            self._label_mapping = group_labels
-        for item in items:
-            if item.page_id in self._labels:
-                self._labels[item.page_id] = item.label
-        for pid, label in self._labels.items():
-            if pid not in self._buttons:
-                continue
-            button = self._buttons[pid]
-            button.setText(self._labels[pid] if self._expanded else "")
-            button.setToolTip(None if self._expanded else self._labels[pid])
-            self._set_button_style(button)
-        for group, label in self._group_labels.items():
-            text = self._label_mapping.get(group, group.upper()).upper()
-            label.setText(text)
-
     def set_active_page(self, page_id: str) -> None:
         for pid, button in self._buttons.items():
             checked = pid == page_id

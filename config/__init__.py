@@ -5,7 +5,6 @@ CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(CONFIG_DIR, "settings.json")
 
 DEFAULT_CONFIG = {
-    "language": "en",
     "theme": "light",
     "window_width": 1200,
     "window_height": 750,
@@ -37,15 +36,6 @@ class AppConfig:
 
     def set(self, key, value):
         self._data[key] = value
-        self.save()
-
-    @property
-    def language(self):
-        return self._data.get("language", "en")
-
-    @language.setter
-    def language(self, value):
-        self._data["language"] = value
         self.save()
 
     @property

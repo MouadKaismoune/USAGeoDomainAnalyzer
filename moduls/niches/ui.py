@@ -19,7 +19,6 @@ class NichesWidget(QWidget):
         self._loading = False
         self.IGNORE_COL = 2
         self._setup_ui()
-        self.refresh_data()
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -54,7 +53,7 @@ class NichesWidget(QWidget):
         self.export_btn.clicked.connect(self._on_export)
         input_layout.addWidget(self.export_btn)
 
-        self.reset_btn = QPushButton("Reset Data")
+        self.reset_btn = QPushButton(t.t("niches_reset_data"))
         self.reset_btn.setObjectName("delete_btn")
         self.reset_btn.clicked.connect(self._on_reset)
         input_layout.addWidget(self.reset_btn)
@@ -230,8 +229,8 @@ class NichesWidget(QWidget):
             return
         name = self.table.item(row, 1).text()
         reply = QMessageBox.question(
-            self, "Reset Data",
-            f"Delete all domain data for '{name}' and set as unchecked?",
+            self, t.t("niches_reset_data"),
+            t.t("niches_reset_confirm", name=name),
             QMessageBox.Yes | QMessageBox.No
         )
         if reply == QMessageBox.Yes:

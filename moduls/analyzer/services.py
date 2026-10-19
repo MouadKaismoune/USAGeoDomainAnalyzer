@@ -1,13 +1,14 @@
 import time
-import requests
 from datetime import datetime
 from moduls.cities.services import get_city_names
-from moduls.niches.services import get_unchecked_niche_names, mark_checked
+from moduls.niches.services import (
+    get_unchecked_niche_names, mark_checked, reset_niche,
+)
 from moduls.domains.services import add_domains_bulk
+from moduls.domains.rdap import (
+    AVAILABLE, REGISTERED, check_domain_rdap, classify_status,
+)
 from database import db
-from database.models import NicheSummaryModel
-
-summary_model = NicheSummaryModel(db)
 
 RUNNING = False
 
@@ -17,18 +18,29 @@ def stop_analysis():
     RUNNING = False
 
 
-def check_domain_rdap(domain):
-    url = f"https://rdap.verisign.com/com/v1/domain/{domain}"
-    try:
-        response = requests.get(url, timeout=10)
-        if response.status_code == 200:
-            return "❌ Registered"
-        elif response.status_code == 404:
-            return "✅ Available"
-        else:
-            return f"⚠️ Unknown ({response.status_code})"
-    except Exception:
-        return "⚠️ Error"
+def _interruptible_sleep(seconds):
+    """Sleep in short steps so ``stop_analysis()`` takes effect quickly."""
+    remaining = float(seconds)
+    while remaining > 0 and RUNNING:
+        time.sleep(min(0.25, remaining))
+        remaining -= 0.25
+
+
+def _reset_if_checked(niche, progress_callback):
+    """Drop a previously checked niche's results before re-checking it.
+
+    Re-running the analysis on an already-checked niche would otherwise append
+    duplicate domains. Returns ``True`` when a reset happened so the caller can
+    log it.
+    """
+    row = db.fetch_one("SELECT is_checked FROM niches WHERE name = ?", (niche,))
+    if not row or not row["is_checked"]:
+        return False
+
+    reset_niche(niche)
+    if progress_callback:
+        progress_callback(type="niche_reset", niche=niche)
+    return True
 
 
 def run_analysis(selected_niches=None, delay_between_cities=2, delay_between_niches=30, progress_callback=None):
@@ -55,6 +67,11 @@ def run_analysis(selected_niches=None, delay_between_cities=2, delay_between_nic
         if not RUNNING:
             break
 
+        # Re-checking an already checked niche: clear its old results first so
+        # duplicates are never added.
+        if _reset_if_checked(niche, progress_callback) and not RUNNING:
+            break
+
         niche_available = 0
         niche_registered = 0
         niche_unknown = 0
@@ -77,9 +94,10 @@ def run_analysis(selected_niches=None, delay_between_cities=2, delay_between_nic
             records.append((domain, status, city, niche, date_today))
 
             status_lower = status.lower()
-            if "available" in status_lower and "registered" not in status_lower:
+            bucket = classify_status(status_lower)
+            if bucket == AVAILABLE:
                 niche_available += 1
-            elif "registered" in status_lower:
+            elif bucket == REGISTERED:
                 niche_registered += 1
             else:
                 niche_unknown += 1
@@ -97,15 +115,17 @@ def run_analysis(selected_niches=None, delay_between_cities=2, delay_between_nic
                     total_niches=total_niches,
                 )
 
-            time.sleep(delay_between_cities)
+            _interruptible_sleep(delay_between_cities)
 
         if not RUNNING:
             break
 
         if records:
-            add_domains_bulk(records)
-            summary_model.upsert(niche, niche_available, niche_registered, niche_unknown, date_today)
-            mark_checked(niche, date_today)
+            # Domains and the "checked" flag are committed together so a niche
+            # is never left with saved domains but still marked unchecked.
+            with db.transaction() as conn:
+                add_domains_bulk(records, conn=conn)
+                mark_checked(niche, date_today, conn=conn)
 
         if progress_callback:
             progress_callback(
@@ -125,10 +145,7 @@ def run_analysis(selected_niches=None, delay_between_cities=2, delay_between_nic
                     seconds=delay_between_niches,
                     next_niche=niches[niche_idx + 1] if niche_idx + 1 < len(niches) else "",
                 )
-            remaining = delay_between_niches
-            while remaining > 0 and RUNNING:
-                time.sleep(1)
-                remaining -= 1
+            _interruptible_sleep(delay_between_niches)
 
     RUNNING = False
     return True, "completed"

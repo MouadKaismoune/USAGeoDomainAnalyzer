@@ -1,4 +1,4 @@
-from moduls.maintenance.services import get_unknown_domains, get_unknown_count
+from moduls.maintenance.services import get_unknown_domains
 
 
 def get_unknown_domains_table():

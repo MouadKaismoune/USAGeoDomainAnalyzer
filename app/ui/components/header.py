@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt, Signal
-from PySide6.QtGui import QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
@@ -12,27 +11,11 @@ from PySide6.QtWidgets import (
 )
 
 from app.core.config import CONFIG
-from app.core.icons import load_icon
+from app.core.icons import load_icon, load_logo_pixmap
 from app.ui.themes.theme import Theme
 
 _WINDOW_BUTTON_SIZE = 32
 _BRAND_ICON_SIZE = 30
-
-
-def _rounded_pixmap(path: str, size: int) -> QPixmap:
-    """Load a square image and crop it into a circular pixmap."""
-    source = QPixmap(path)
-    rounded = QPixmap(size, size)
-    rounded.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(rounded)
-    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-    clip = QPainterPath()
-    clip.addRoundedRect(0, 0, size, size, size / 2, size / 2)
-    painter.setClipPath(clip)
-    painter.drawPixmap(0, 0, size, size, source)
-    painter.end()
-    return rounded
 
 
 class Header(QFrame):
@@ -63,7 +46,7 @@ class Header(QFrame):
 
         brand_icon = QLabel()
         brand_icon.setObjectName("HeaderBrandIcon")
-        logo = _rounded_pixmap("icon.png", _BRAND_ICON_SIZE)
+        logo = load_logo_pixmap(_BRAND_ICON_SIZE)
         if not logo.isNull():
             brand_icon.setPixmap(logo)
         brand_icon.setFixedSize(_BRAND_ICON_SIZE, _BRAND_ICON_SIZE)
@@ -97,15 +80,15 @@ class Header(QFrame):
 
         right_layout.addSpacing(4)
 
-        self._minimize_button = self._build_window_button("minimize", "Minimize")
+        self._minimize_button = self._build_window_button("Minimize")
         self._minimize_button.clicked.connect(self.minimize_requested.emit)
         right_layout.addWidget(self._minimize_button)
 
-        self._max_button = self._build_window_button("maximize", "Maximize")
+        self._max_button = self._build_window_button("Maximize")
         self._max_button.clicked.connect(self.maximize_requested.emit)
         right_layout.addWidget(self._max_button)
 
-        self._close_button = self._build_window_button("close", "Close", close=True)
+        self._close_button = self._build_window_button("Close", close=True)
         self._close_button.clicked.connect(self.close_requested.emit)
         right_layout.addWidget(self._close_button)
 
@@ -124,7 +107,7 @@ class Header(QFrame):
         button.setCursor(Qt.CursorShape.PointingHandCursor)
         return button
 
-    def _build_window_button(self, icon_name: str, tooltip: str, close: bool = False) -> QPushButton:
+    def _build_window_button(self, tooltip: str, close: bool = False) -> QPushButton:
         button = QPushButton()
         if close:
             button.setObjectName("WindowButtonClose")
@@ -134,7 +117,6 @@ class Header(QFrame):
         button.setFixedSize(_WINDOW_BUTTON_SIZE, _WINDOW_BUTTON_SIZE)
         button.setCursor(Qt.CursorShape.PointingHandCursor)
         button.setToolTip(tooltip)
-        button.setProperty("_icon_name", icon_name)
         return button
 
     def apply_theme(self, theme: Theme) -> None:
